@@ -1,30 +1,39 @@
-import { _decorator, Component, Sprite, UITransform, Animation, AnimationClip, animation, SpriteFrame } from 'cc'
-import { TILE_HEIGHT, TILE_WIDTH } from 'db://assets/Scripts/Tile/TileManager'
-import { ResourceManager } from 'db://assets/RunTime/ResourceManager'
-import { CONTROLER_ENUM, EVENT_ENUM } from 'db://assets/Enums'
+import { _decorator } from 'cc'
+import { CONTROLER_ENUM, DIRECTION_ENUM, ENTITY_STATE_ENUM, ENTITY_TYPE_ENUM, EVENT_ENUM } from 'db://assets/Enums'
 import { EventManager } from 'db://assets/RunTime/EventManager'
+import { PlayerStateMachine } from 'db://assets/Scripts/Player/PlayerStateMachine'
+import { EntityManager } from 'db://assets/Base/EntityManager'
+import { DataManager } from 'db://assets/RunTime/DataManager'
+import { TileManager } from 'db://assets/Scripts/Tile/TileManager'
 
 const { ccclass, property } = _decorator
 
-const ANIMATION_SPEED = 1 / 8
-
 @ccclass('PlayerManager')
-export class PlayerManager extends Component {
-  x: number = 0
-  y: number = 0
+export class PlayerManager extends EntityManager {
   targetX: number = 0
   targetY: number = 0
   private readonly speed = 1 / 10
 
   async init() {
-    await this.render()
-    EventManager.Instance.on(EVENT_ENUM.PLAY_CONTROLER, this.move, this)
+    this.fsm = this.addComponent(PlayerStateMachine)
+    await this.fsm.init()
+    super.init({
+      x: 2,
+      y: 8,
+      direction: DIRECTION_ENUM.TOP,
+      state: ENTITY_STATE_ENUM.IDLE,
+      type: ENTITY_TYPE_ENUM.PLAYER,
+    })
+    this.targetY = this.y
+    this.targetX = this.x
+    this.direction = DIRECTION_ENUM.TOP
+    this.state = ENTITY_STATE_ENUM.IDLE
+    EventManager.Instance.on(EVENT_ENUM.PLAY_CONTROLER, this.inputHandle, this)
   }
 
   update() {
     this.updateXY()
-    //转换为实际坐标
-    this.node.setPosition(this.x * TILE_WIDTH - TILE_WIDTH * 1.5, -this.y * TILE_HEIGHT + TILE_HEIGHT * 1.5)
+    super.update()
   }
 
   updateXY() {
@@ -46,6 +55,14 @@ export class PlayerManager extends Component {
     }
   }
 
+  inputHandle(inputDirection: CONTROLER_ENUM) {
+    if (this.willBlock(inputDirection)) {
+      console.log('block')
+      return
+    }
+    this.move(inputDirection)
+  }
+
   move(inputDirection: CONTROLER_ENUM) {
     switch (inputDirection) {
       case CONTROLER_ENUM.TOP:
@@ -60,36 +77,128 @@ export class PlayerManager extends Component {
       case CONTROLER_ENUM.RIGHT:
         this.targetX += 1
         break
+      case CONTROLER_ENUM.TURN_LEFT:
+        if (this.direction === DIRECTION_ENUM.TOP) {
+          this.direction = DIRECTION_ENUM.LEFT
+        } else if (this.direction === DIRECTION_ENUM.LEFT) {
+          this.direction = DIRECTION_ENUM.BOTTOM
+        } else if (this.direction === DIRECTION_ENUM.BOTTOM) {
+          this.direction = DIRECTION_ENUM.RIGHT
+        } else if (this.direction === DIRECTION_ENUM.RIGHT) {
+          this.direction = DIRECTION_ENUM.TOP
+        }
+        this.state = ENTITY_STATE_ENUM.TURN_LEFT
+        break
+      case CONTROLER_ENUM.TURN_RIGHT:
+        if (this.direction === DIRECTION_ENUM.TOP) {
+          this.direction = DIRECTION_ENUM.RIGHT
+        } else if (this.direction === DIRECTION_ENUM.RIGHT) {
+          this.direction = DIRECTION_ENUM.BOTTOM
+        } else if (this.direction === DIRECTION_ENUM.BOTTOM) {
+          this.direction = DIRECTION_ENUM.LEFT
+        } else if (this.direction === DIRECTION_ENUM.LEFT) {
+          this.direction = DIRECTION_ENUM.TOP
+        }
+        this.state = ENTITY_STATE_ENUM.TURN_RIGHT
+        break
       default:
         break
     }
   }
 
-  //渲染主角
-  async render() {
-    const sprite = this.addComponent(Sprite)
-    //自定义宽高
-    sprite.sizeMode = Sprite.SizeMode.CUSTOM
-    const transform = this.getComponent(UITransform)
-    transform.setContentSize(TILE_WIDTH * 4, TILE_HEIGHT * 4)
+  //检测碰撞 true 有碰撞 false 无碰撞
+  private willBlock(inputDirection: CONTROLER_ENUM) {
+    //拿到角色信息
+    const { targetX: x, targetY: y, direction } = this
+    //拿到当前地图信息
+    const { tileInfo } = DataManager.Instance
 
-    const spriteFrames = await ResourceManager.Instance.loadDir('texture/player/idle/top')
+    switch (direction) {
+      //方向向上
+      case DIRECTION_ENUM.TOP:
+        //判断按键
+        switch (inputDirection) {
+          case CONTROLER_ENUM.BOTTOM:
+            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.LEFT:
+            return this.checkMoveBlock(tileInfo[x - 1][y - 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.RIGHT:
+            return this.checkMoveBlock(tileInfo[x + 1][y - 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TOP:
+            return this.checkMoveBlock(tileInfo[x][y - 2], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TURN_LEFT:
+            return this.checkTurnBlock(tileInfo[x - 1][y - 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+          case CONTROLER_ENUM.TURN_RIGHT:
+            return this.checkTurnBlock(tileInfo[x + 1][y - 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+        }
+        break
+      case DIRECTION_ENUM.BOTTOM:
+        //判断按键
+        switch (inputDirection) {
+          case CONTROLER_ENUM.BOTTOM:
+            return this.checkMoveBlock(tileInfo[x][y + 2], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.LEFT:
+            return this.checkMoveBlock(tileInfo[x - 1][y + 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.RIGHT:
+            return this.checkMoveBlock(tileInfo[x + 1][y + 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TOP:
+            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TURN_LEFT:
+            return this.checkTurnBlock(tileInfo[x + 1][y + 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+          case CONTROLER_ENUM.TURN_RIGHT:
+            return this.checkTurnBlock(tileInfo[x - 1][y + 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+        }
+        break
+      case DIRECTION_ENUM.LEFT:
+        //判断按键
+        switch (inputDirection) {
+          case CONTROLER_ENUM.BOTTOM:
+            return this.checkMoveBlock(tileInfo[x - 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.LEFT:
+            return this.checkMoveBlock(tileInfo[x - 2][y], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.RIGHT:
+            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TOP:
+            return this.checkMoveBlock(tileInfo[x - 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TURN_LEFT:
+            return this.checkTurnBlock(tileInfo[x - 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+          case CONTROLER_ENUM.TURN_RIGHT:
+            return this.checkTurnBlock(tileInfo[x - 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+        }
+        break
+      case DIRECTION_ENUM.RIGHT:
+        //判断按键
+        switch (inputDirection) {
+          case CONTROLER_ENUM.BOTTOM:
+            return this.checkMoveBlock(tileInfo[x + 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.LEFT:
+            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.RIGHT:
+            return this.checkMoveBlock(tileInfo[x + 2][y], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TOP:
+            return this.checkMoveBlock(tileInfo[x + 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+          case CONTROLER_ENUM.TURN_LEFT:
+            return this.checkTurnBlock(tileInfo[x + 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+          case CONTROLER_ENUM.TURN_RIGHT:
+            return this.checkTurnBlock(tileInfo[x + 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+        }
+        break
+    }
+    return false
+  }
 
-    const animationClip = new AnimationClip()
-    animationClip.duration = 1.0 // 整个动画剪辑的周期
-
-    const track = new animation.ObjectTrack() // 创建一个向量轨道
-    track.path = new animation.TrackPath().toComponent(Sprite).toProperty('spriteFrame') // 指定轨道路径，即指定目标对象为 "Foo" 子节点的 "position" 属性
-    const frames: Array<[number, SpriteFrame]> = spriteFrames.map((item, index) => [ANIMATION_SPEED * index, item])
-    track.channel.curve.assignSorted(frames)
-
-    // 最后将轨道添加到动画剪辑以应用
-    animationClip.addTrack(track)
-    animationClip.duration = frames.length * ANIMATION_SPEED //整个动画持续事件
-    //设置循环播放
-    animationClip.wrapMode = AnimationClip.WrapMode.Loop
-    const animationComponent = this.addComponent(Animation)
-    animationComponent.defaultClip = animationClip
-    animationComponent.play()
+  checkMoveBlock(armsTarget: TileManager, playerTarget: TileManager, state: ENTITY_STATE_ENUM): boolean {
+    if (!armsTarget || !armsTarget.turnable || !playerTarget || !playerTarget.moveable) {
+      this.state = state
+      return true
+    }
+    return false
+  }
+  checkTurnBlock(armsTarget: TileManager, armsPassTarget: TileManager, state: ENTITY_STATE_ENUM): boolean {
+    if (!armsTarget || !armsTarget.turnable || !armsPassTarget || !armsPassTarget.turnable) {
+      this.state = state
+      return true
+    }
+    return false
   }
 }

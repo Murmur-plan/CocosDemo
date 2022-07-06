@@ -38,7 +38,6 @@ export class BattleManager extends Component {
     this.stage = createUINode()
     //舞台在当前节点下
     this.stage.setParent(this.node)
-    console.log(EventManager.Instance)
   }
 
   //初始化关卡

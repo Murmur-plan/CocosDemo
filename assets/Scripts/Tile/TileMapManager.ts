@@ -16,10 +16,11 @@ export class TileMapManager extends Component {
     for (const key in spriteFrames) {
       dataMap.set(spriteFrames[key].name, spriteFrames[key])
     }
-    // console.log(spriteFrames)
+    DataManager.Instance.tileInfo = []
     const len = mapInfo.length
     for (let i = 0; i < len; i++) {
       const column = mapInfo[i]
+      DataManager.Instance.tileInfo[i] = []
       for (let j = 0; j < column.length; j++) {
         const curItem = column[j]
         if (curItem.src == null || curItem.type == null) {
@@ -36,8 +37,9 @@ export class TileMapManager extends Component {
         const spriteFrame = dataMap.get(imgSrc) || spriteFrames[0]
         //增加单地图渲染组件
         const tileManager = node.addComponent(TileManager)
-        tileManager.init(spriteFrame, i, j)
+        tileManager.init(spriteFrame, i, j, curItem.type)
         node.setParent(this.node)
+        DataManager.Instance.tileInfo[i][j] = tileManager
       }
     }
   }
