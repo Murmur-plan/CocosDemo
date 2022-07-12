@@ -12,6 +12,7 @@ const { ccclass, property } = _decorator
 export class PlayerManager extends EntityManager {
   targetX: number = 0
   targetY: number = 0
+  private isMove = false
   private readonly speed = 1 / 10
 
   async init() {
@@ -29,6 +30,7 @@ export class PlayerManager extends EntityManager {
     this.direction = DIRECTION_ENUM.TOP
     this.state = ENTITY_STATE_ENUM.IDLE
     EventManager.Instance.on(EVENT_ENUM.PLAY_CONTROLER, this.inputHandle, this)
+    EventManager.Instance.on(EVENT_ENUM.ATTACK_PLAYER, this.attacked, this)
   }
 
   update() {
@@ -49,21 +51,76 @@ export class PlayerManager extends EntityManager {
       this.y += this.speed
     }
 
-    if (Math.abs(this.targetX - this.x) <= 0.1 && Math.abs(this.targetY - this.y) <= 0.1) {
+    if (Math.abs(this.targetX - this.x) <= 0.1 && Math.abs(this.targetY - this.y) <= 0.1 && this.isMove) {
+      this.isMove = false
       this.x = this.targetX
       this.y = this.targetY
+      EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
     }
   }
 
   inputHandle(inputDirection: CONTROLER_ENUM) {
+    if (this.isMove || this.state === ENTITY_STATE_ENUM.ATTACK) {
+      return
+    }
+    if (this.state === ENTITY_STATE_ENUM.DEATH) {
+      return
+    }
+    //是否可以攻击敌人
+    if (this.willAttack(inputDirection)) {
+      return
+    }
     if (this.willBlock(inputDirection)) {
-      console.log('block')
       return
     }
     this.move(inputDirection)
   }
 
+  private willAttack(inputDirection: CONTROLER_ENUM) {
+    //面向和要走的方向相同才能攻击
+    if (inputDirection.toString() != this.direction.toString()) {
+      return false
+    }
+    let isAttack = false
+    //拿到所有敌人
+    const enemies = DataManager.Instance.enemies
+    for (let i = 0; i < enemies.length; i++) {
+      const { x: enemyX, y: enemyY, state: enemyState, id: enemyId } = enemies[i]
+      if (enemyState == ENTITY_STATE_ENUM.DEATH) {
+        continue
+      }
+      switch (inputDirection) {
+        case CONTROLER_ENUM.TOP:
+          if (this.x === enemyX && this.targetY === enemyY + 2) {
+            isAttack = true
+          }
+          break
+        case CONTROLER_ENUM.BOTTOM:
+          if (this.x === enemyX && this.targetY === enemyY - 2) {
+            isAttack = true
+          }
+          break
+        case CONTROLER_ENUM.LEFT:
+          if (this.targetX === enemyX + 2 && this.y === enemyY) {
+            isAttack = true
+          }
+          break
+        case CONTROLER_ENUM.RIGHT:
+          if (this.targetX === enemyX - 2 && this.y === enemyY) {
+            isAttack = true
+          }
+      }
+      if (isAttack) {
+        this.state = ENTITY_STATE_ENUM.ATTACK
+        EventManager.Instance.emit(EVENT_ENUM.ATTACK_ENEMY, enemyId)
+        break
+      }
+    }
+    return isAttack
+  }
+
   move(inputDirection: CONTROLER_ENUM) {
+    this.isMove = true
     switch (inputDirection) {
       case CONTROLER_ENUM.TOP:
         this.targetY -= 1
@@ -88,6 +145,7 @@ export class PlayerManager extends EntityManager {
           this.direction = DIRECTION_ENUM.TOP
         }
         this.state = ENTITY_STATE_ENUM.TURN_LEFT
+        EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
         break
       case CONTROLER_ENUM.TURN_RIGHT:
         if (this.direction === DIRECTION_ENUM.TOP) {
@@ -100,6 +158,7 @@ export class PlayerManager extends EntityManager {
           this.direction = DIRECTION_ENUM.TOP
         }
         this.state = ENTITY_STATE_ENUM.TURN_RIGHT
+        EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
         break
       default:
         break
@@ -194,11 +253,19 @@ export class PlayerManager extends EntityManager {
     }
     return false
   }
+
   checkTurnBlock(armsTarget: TileManager, armsPassTarget: TileManager, state: ENTITY_STATE_ENUM): boolean {
     if (!armsTarget || !armsTarget.turnable || !armsPassTarget || !armsPassTarget.turnable) {
       this.state = state
       return true
     }
     return false
+  }
+
+  //主角死亡
+  attacked(type: ENTITY_STATE_ENUM) {
+    if (type === ENTITY_STATE_ENUM.DEATH) {
+      this.state = ENTITY_STATE_ENUM.DEATH
+    }
   }
 }

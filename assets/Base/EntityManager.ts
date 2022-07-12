@@ -9,17 +9,20 @@ import {
   EVENT_ENUM,
   PARAMS_NAME_ENUM,
 } from 'db://assets/Enums'
-import { EventManager } from 'db://assets/RunTime/EventManager'
-import { PlayerStateMachine } from 'db://assets/Scripts/Player/PlayerStateMachine'
 import { IEntity } from 'db://assets/Levels'
+import { StateMachine } from 'db://assets/Base/StateMachine'
+import { generateId } from 'db://assets/Scripts/Utils'
 
 const { ccclass, property } = _decorator
 
 @ccclass('EntityManager')
 export class EntityManager extends Component {
+  id: string = generateId(8)
+  //位置信息
   x: number = 0
   y: number = 0
-  fsm: PlayerStateMachine
+  //状态机
+  fsm: StateMachine
   //角色方向
   private _direction: DIRECTION_ENUM
   //角色状态
@@ -63,4 +66,6 @@ export class EntityManager extends Component {
     //转换为实际坐标
     this.node.setPosition(this.x * TILE_WIDTH - TILE_WIDTH * 1.5, -this.y * TILE_HEIGHT + TILE_HEIGHT * 1.5)
   }
+
+  onDisable() {}
 }

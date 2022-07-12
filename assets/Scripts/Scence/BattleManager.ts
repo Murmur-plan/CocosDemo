@@ -7,6 +7,8 @@ import { DataManager } from 'db://assets/RunTime/DataManager'
 import { EventManager } from 'db://assets/RunTime/EventManager'
 import { EVENT_ENUM } from 'db://assets/Enums'
 import { PlayerManager } from 'db://assets/Scripts/Player/PlayerManager'
+import { WoodenSkeletonManager } from 'db://assets/Scripts/WoodenSkeleton/WoodenSkeletonManager'
+import { DoorManager } from 'db://assets/Scripts/Door/DoorManager'
 
 const { ccclass, property } = _decorator
 
@@ -50,9 +52,15 @@ export class BattleManager extends Component {
       DataManager.Instance.mapInfo = this.level.mapInfo
       DataManager.Instance.mapRowCount = this.level.mapInfo.length || 0
       DataManager.Instance.mapColumnCount = this.level.mapInfo[0].length || 0
-
+      //初始化地图
       this.generateTileMap()
+      //初始化角色
       this.generatePlayer()
+      //初始化敌人
+      this.generateWoodenSkeleton(2, 4)
+      this.generateWoodenSkeleton(7, 7)
+      //初始化门
+      this.generateDoor(7, 8)
     }
   }
   //下一关
@@ -88,10 +96,28 @@ export class BattleManager extends Component {
     this.stage.setPosition(-disX, disY)
   }
   //生成主角
-  private generatePlayer() {
+  async generatePlayer() {
     const player = createUINode()
     player.setParent(this.stage)
     const playManager = player.addComponent(PlayerManager)
-    playManager.init()
+    DataManager.Instance.palyer = playManager
+    await playManager.init()
+    EventManager.Instance.emit(EVENT_ENUM.PLAY_BIRTH, true)
+  }
+
+  async generateWoodenSkeleton(x: number, y: number) {
+    const woodenSkeleton = createUINode()
+    woodenSkeleton.setParent(this.stage)
+    const manager = woodenSkeleton.addComponent(WoodenSkeletonManager)
+    DataManager.Instance.enemies.push(manager)
+    await manager.init({ x, y })
+  }
+
+  async generateDoor(x: number, y: number) {
+    const door = createUINode()
+    door.setParent(this.stage)
+    const manager = door.addComponent(DoorManager)
+    await manager.init({ x, y })
+    DataManager.Instance.door = manager
   }
 }

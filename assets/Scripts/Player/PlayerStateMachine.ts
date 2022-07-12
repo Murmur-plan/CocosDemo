@@ -8,6 +8,8 @@ import BlockTurnLeftSubStateMachine from 'db://assets/Scripts/Player/BlockTurnLe
 import { EntityManager } from 'db://assets/Base/EntityManager'
 import TurnRightSubStateMachine from 'db://assets/Scripts/Player/TurnRightSubStateMachine'
 import BlockTurnRightSubStateMachine from 'db://assets/Scripts/Player/BlockTurnRightSubStateMachine'
+import DeathSubStateMachine from 'db://assets/Scripts/Player/DeathSubStateMachine'
+import AttackSubStateMachine from 'db://assets/Scripts/Player/AttackSubStateMachine'
 
 const { ccclass, property } = _decorator
 
@@ -21,6 +23,7 @@ export interface IParamValue {
 @ccclass('PlayerStateMachine')
 export class PlayerStateMachine extends StateMachine {
   async init() {
+    //添加动画组件
     this.animationComponent = this.addComponent(Animation)
     this.initParams()
     //内部有异步加载资源
@@ -39,6 +42,8 @@ export class PlayerStateMachine extends StateMachine {
     this.params.set(PARAMS_NAME_ENUM.BLOCK_FRONT, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.BLOCK_TURN_LEFT, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.BLOCK_TURN_RIGHT, getInitParamsTrigger())
+    this.params.set(PARAMS_NAME_ENUM.DEATH, getInitParamsTrigger())
+    this.params.set(PARAMS_NAME_ENUM.ATTACK, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.DIRECTION, getInitParamsNumber())
   }
 
@@ -50,6 +55,8 @@ export class PlayerStateMachine extends StateMachine {
     this.stateMachines.set(PARAMS_NAME_ENUM.BLOCK_FRONT, new BlockFrountSubStateMachine(this))
     this.stateMachines.set(PARAMS_NAME_ENUM.BLOCK_TURN_LEFT, new BlockTurnLeftSubStateMachine(this))
     this.stateMachines.set(PARAMS_NAME_ENUM.BLOCK_TURN_RIGHT, new BlockTurnRightSubStateMachine(this))
+    this.stateMachines.set(PARAMS_NAME_ENUM.DEATH, new DeathSubStateMachine(this))
+    this.stateMachines.set(PARAMS_NAME_ENUM.ATTACK, new AttackSubStateMachine(this))
   }
 
   run() {
@@ -99,7 +106,7 @@ export class PlayerStateMachine extends StateMachine {
     //监听动画播放完毕事件
     this.animationComponent.on(Animation.EventType.FINISHED, () => {
       const name = this.animationComponent.defaultClip.name
-      const whiteList = ['block', 'turn']
+      const whiteList = ['block', 'turn', 'attack']
       if (whiteList.some(v => name.includes(v))) {
         this.node.getComponent(EntityManager).state = ENTITY_STATE_ENUM.IDLE
       }

@@ -14,6 +14,16 @@ export enum TILE_TYPE_ENUM {
 export enum EVENT_ENUM {
   NEXT_LEVEL = 'NEXT_LEVEL',
   PLAY_CONTROLER = 'PLAY_CONTROLER',
+  //主角移动结束事件
+  PLAY_MOVE_END = 'PLAY_MOVE_END',
+  //主角出生
+  PLAY_BIRTH = 'PLAY_BIRTH',
+  //攻击主角
+  ATTACK_PLAYER = 'ATTACK_PLAYER',
+  //攻击怪物
+  ATTACK_ENEMY = 'ATTACK_ENEMY',
+  //开门
+  DOOR_OPEN = 'DOOR_OPEN',
 }
 
 export enum CONTROLER_ENUM {
@@ -38,6 +48,8 @@ export enum PARAMS_NAME_ENUM {
   BLOCK_FRONT = 'BLOCK_FRONT',
   BLOCK_TURN_LEFT = 'BLOCK_TURN_LEFT',
   BLOCK_TURN_RIGHT = 'BLOCK_TURN_RIGHT',
+  ATTACK = 'ATTACK',
+  DEATH = 'DEATH',
 }
 
 export enum DIRECTION_ENUM {
@@ -54,6 +66,9 @@ export enum ENTITY_STATE_ENUM {
   BLOCK_FRONT = 'BLOCK_FRONT',
   BLOCK_TURN_LEFT = 'BLOCK_TURN_LEFT',
   BLOCK_TURN_RIGHT = 'BLOCK_TURN_RIGHT',
+  ATTACK = 'ATTACK',
+  //地面死亡
+  DEATH = 'DEATH',
 }
 
 export enum DIRECTION_NUMBER_ENUM {
@@ -65,4 +80,6 @@ export enum DIRECTION_NUMBER_ENUM {
 
 export enum ENTITY_TYPE_ENUM {
   PLAYER = 'PLAYER',
+  ENEMY = 'ENEMY',
+  DOOR = 'DOOR',
 }
