@@ -12,6 +12,10 @@ export class DoorManager extends EntityManager {
   onDisable() {
     super.onDisable()
     EventManager.Instance.off(EVENT_ENUM.DOOR_OPEN, this.onOpen, this)
+    //设置当前瓦片地图可走
+    const map = DataManager.Instance.tileInfo[this.x][this.y]
+    map.moveable = true
+    map.turnable = true
   }
   async init({ x, y }) {
     this.fsm = this.addComponent(DoorStateMachine)
@@ -24,6 +28,10 @@ export class DoorManager extends EntityManager {
       type: ENTITY_TYPE_ENUM.DOOR,
     })
     EventManager.Instance.on(EVENT_ENUM.DOOR_OPEN, this.onOpen, this)
+    //设置当前瓦片地图不可走
+    const tile = DataManager.Instance.tileInfo[x][y]
+    tile.moveable = false
+    tile.turnable = false
   }
 
   private onOpen() {

@@ -1,12 +1,10 @@
 import { _decorator, Component, Sprite, UITransform } from 'cc'
 import { TILE_HEIGHT, TILE_WIDTH } from 'db://assets/Scripts/Tile/TileManager'
 import {
-  CONTROLER_ENUM,
   DIRECTION_ENUM,
   DIRECTION_NUMBER_ENUM,
   ENTITY_STATE_ENUM,
   ENTITY_TYPE_ENUM,
-  EVENT_ENUM,
   PARAMS_NAME_ENUM,
 } from 'db://assets/Enums'
 import { IEntity } from 'db://assets/Levels'

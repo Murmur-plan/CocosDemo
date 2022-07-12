@@ -10,6 +10,7 @@ import TurnRightSubStateMachine from 'db://assets/Scripts/Player/TurnRightSubSta
 import BlockTurnRightSubStateMachine from 'db://assets/Scripts/Player/BlockTurnRightSubStateMachine'
 import DeathSubStateMachine from 'db://assets/Scripts/Player/DeathSubStateMachine'
 import AttackSubStateMachine from 'db://assets/Scripts/Player/AttackSubStateMachine'
+import AirDeathSubStateMachine from 'db://assets/Scripts/Player/AirDeathSubStateMachine'
 
 const { ccclass, property } = _decorator
 
@@ -43,6 +44,7 @@ export class PlayerStateMachine extends StateMachine {
     this.params.set(PARAMS_NAME_ENUM.BLOCK_TURN_LEFT, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.BLOCK_TURN_RIGHT, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.DEATH, getInitParamsTrigger())
+    this.params.set(PARAMS_NAME_ENUM.AIR_DEATH, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.ATTACK, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.DIRECTION, getInitParamsNumber())
   }
@@ -56,6 +58,7 @@ export class PlayerStateMachine extends StateMachine {
     this.stateMachines.set(PARAMS_NAME_ENUM.BLOCK_TURN_LEFT, new BlockTurnLeftSubStateMachine(this))
     this.stateMachines.set(PARAMS_NAME_ENUM.BLOCK_TURN_RIGHT, new BlockTurnRightSubStateMachine(this))
     this.stateMachines.set(PARAMS_NAME_ENUM.DEATH, new DeathSubStateMachine(this))
+    this.stateMachines.set(PARAMS_NAME_ENUM.AIR_DEATH, new AirDeathSubStateMachine(this))
     this.stateMachines.set(PARAMS_NAME_ENUM.ATTACK, new AttackSubStateMachine(this))
   }
 

@@ -5,10 +5,12 @@ import Levels, { ILevel } from 'db://assets/Levels'
 import { TILE_HEIGHT, TILE_WIDTH } from 'db://assets/Scripts/Tile/TileManager'
 import { DataManager } from 'db://assets/RunTime/DataManager'
 import { EventManager } from 'db://assets/RunTime/EventManager'
-import { EVENT_ENUM } from 'db://assets/Enums'
+import { DIRECTION_ENUM, ENTITY_STATE_ENUM, ENTITY_TYPE_ENUM, EVENT_ENUM } from 'db://assets/Enums'
 import { PlayerManager } from 'db://assets/Scripts/Player/PlayerManager'
 import { WoodenSkeletonManager } from 'db://assets/Scripts/WoodenSkeleton/WoodenSkeletonManager'
 import { DoorManager } from 'db://assets/Scripts/Door/DoorManager'
+import { IronSkeletonManager } from 'db://assets/Scripts/IronSkeleton/IronSkeletonManager'
+import { BurstManager } from 'db://assets/Scripts/Burst/BurstManager'
 
 const { ccclass, property } = _decorator
 
@@ -43,7 +45,7 @@ export class BattleManager extends Component {
   }
 
   //初始化关卡
-  initLevel() {
+  async initLevel() {
     const level = Levels[`Level${DataManager.Instance.levelIndex}`]
     if (level) {
       DataManager.Instance.reset()
@@ -53,14 +55,15 @@ export class BattleManager extends Component {
       DataManager.Instance.mapRowCount = this.level.mapInfo.length || 0
       DataManager.Instance.mapColumnCount = this.level.mapInfo[0].length || 0
       //初始化地图
-      this.generateTileMap()
+      await this.generateTileMap()
       //初始化角色
-      this.generatePlayer()
+      await this.generatePlayer(2, 8)
       //初始化敌人
-      this.generateWoodenSkeleton(2, 4)
-      this.generateWoodenSkeleton(7, 7)
+      await this.generateWoodenSkeleton(2, 4)
+      await this.generateIronSkeleton(7, 7)
       //初始化门
-      this.generateDoor(7, 8)
+      await this.generateDoor(7, 8)
+      await this.generateBurst(2, 7)
     }
   }
   //下一关
@@ -75,14 +78,14 @@ export class BattleManager extends Component {
   }
 
   //生成地图
-  generateTileMap() {
+  async generateTileMap() {
     //创建瓦片地图
     const tileMap = createUINode()
     //瓦片地图在舞台上生成
     tileMap.setParent(this.stage)
     //添加组件-具体执行脚本
     const tileMapManager = tileMap.addComponent(TileMapManager)
-    tileMapManager.init()
+    await tileMapManager.init()
 
     this.adaptPos()
   }
@@ -96,12 +99,18 @@ export class BattleManager extends Component {
     this.stage.setPosition(-disX, disY)
   }
   //生成主角
-  async generatePlayer() {
+  async generatePlayer(x: number, y: number) {
     const player = createUINode()
     player.setParent(this.stage)
     const playManager = player.addComponent(PlayerManager)
     DataManager.Instance.palyer = playManager
-    await playManager.init()
+    await playManager.init({
+      x: x,
+      y: y,
+      direction: DIRECTION_ENUM.TOP,
+      state: ENTITY_STATE_ENUM.IDLE,
+      type: ENTITY_TYPE_ENUM.PLAYER,
+    })
     EventManager.Instance.emit(EVENT_ENUM.PLAY_BIRTH, true)
   }
 
@@ -110,7 +119,27 @@ export class BattleManager extends Component {
     woodenSkeleton.setParent(this.stage)
     const manager = woodenSkeleton.addComponent(WoodenSkeletonManager)
     DataManager.Instance.enemies.push(manager)
-    await manager.init({ x, y })
+    await manager.init({
+      x: x,
+      y: y,
+      direction: DIRECTION_ENUM.TOP,
+      state: ENTITY_STATE_ENUM.IDLE,
+      type: ENTITY_TYPE_ENUM.WOODEN_SKELETON,
+    })
+  }
+
+  async generateIronSkeleton(x: number, y: number) {
+    const ironSkeleton = createUINode()
+    ironSkeleton.setParent(this.stage)
+    const manager = ironSkeleton.addComponent(IronSkeletonManager)
+    DataManager.Instance.enemies.push(manager)
+    await manager.init({
+      x: x,
+      y: y,
+      direction: DIRECTION_ENUM.TOP,
+      state: ENTITY_STATE_ENUM.IDLE,
+      type: ENTITY_TYPE_ENUM.IRON_SKELETON,
+    })
   }
 
   async generateDoor(x: number, y: number) {
@@ -119,5 +148,18 @@ export class BattleManager extends Component {
     const manager = door.addComponent(DoorManager)
     await manager.init({ x, y })
     DataManager.Instance.door = manager
+  }
+
+  async generateBurst(x: number, y: number) {
+    const burst = createUINode()
+    burst.setParent(this.stage)
+    const manager = burst.addComponent(BurstManager)
+    await manager.init({
+      x: x,
+      y: y,
+      direction: DIRECTION_ENUM.TOP,
+      state: ENTITY_STATE_ENUM.IDLE,
+      type: ENTITY_TYPE_ENUM.BURST,
+    })
   }
 }

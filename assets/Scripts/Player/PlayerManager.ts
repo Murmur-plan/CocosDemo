@@ -5,6 +5,7 @@ import { PlayerStateMachine } from 'db://assets/Scripts/Player/PlayerStateMachin
 import { EntityManager } from 'db://assets/Base/EntityManager'
 import { DataManager } from 'db://assets/RunTime/DataManager'
 import { TileManager } from 'db://assets/Scripts/Tile/TileManager'
+import { IEntity } from 'db://assets/Levels'
 
 const { ccclass, property } = _decorator
 
@@ -15,16 +16,10 @@ export class PlayerManager extends EntityManager {
   private isMove = false
   private readonly speed = 1 / 10
 
-  async init() {
+  async init(params: IEntity) {
     this.fsm = this.addComponent(PlayerStateMachine)
     await this.fsm.init()
-    super.init({
-      x: 2,
-      y: 8,
-      direction: DIRECTION_ENUM.TOP,
-      state: ENTITY_STATE_ENUM.IDLE,
-      type: ENTITY_TYPE_ENUM.PLAYER,
-    })
+    super.init(params)
     this.targetY = this.y
     this.targetX = this.x
     this.direction = DIRECTION_ENUM.TOP
@@ -63,7 +58,7 @@ export class PlayerManager extends EntityManager {
     if (this.isMove || this.state === ENTITY_STATE_ENUM.ATTACK) {
       return
     }
-    if (this.state === ENTITY_STATE_ENUM.DEATH) {
+    if (this.state === ENTITY_STATE_ENUM.DEATH || this.state === ENTITY_STATE_ENUM.AIR_DEATH) {
       return
     }
     //是否可以攻击敌人
@@ -264,8 +259,8 @@ export class PlayerManager extends EntityManager {
 
   //主角死亡
   attacked(type: ENTITY_STATE_ENUM) {
-    if (type === ENTITY_STATE_ENUM.DEATH) {
-      this.state = ENTITY_STATE_ENUM.DEATH
+    if (this.state != type) {
+      this.state = type
     }
   }
 }

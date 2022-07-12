@@ -1,3 +1,5 @@
+import { WoodenSkeletonManager } from 'db://assets/Scripts/WoodenSkeleton/WoodenSkeletonManager'
+
 export enum TILE_TYPE_ENUM {
   WALL_ROW = 'WALL_ROW',
   WALL_COLUMN = 'WALL_COLUMN',
@@ -50,6 +52,7 @@ export enum PARAMS_NAME_ENUM {
   BLOCK_TURN_RIGHT = 'BLOCK_TURN_RIGHT',
   ATTACK = 'ATTACK',
   DEATH = 'DEATH',
+  AIR_DEATH = 'AIR_DEATH',
 }
 
 export enum DIRECTION_ENUM {
@@ -69,6 +72,8 @@ export enum ENTITY_STATE_ENUM {
   ATTACK = 'ATTACK',
   //地面死亡
   DEATH = 'DEATH',
+  //空中死亡
+  AIR_DEATH = 'AIR_DEATH',
 }
 
 export enum DIRECTION_NUMBER_ENUM {
@@ -80,6 +85,8 @@ export enum DIRECTION_NUMBER_ENUM {
 
 export enum ENTITY_TYPE_ENUM {
   PLAYER = 'PLAYER',
-  ENEMY = 'ENEMY',
+  WOODEN_SKELETON = 'WOODEN_SKELETON',
+  IRON_SKELETON = 'IRON_SKELETON',
   DOOR = 'DOOR',
+  BURST = 'BURST',
 }

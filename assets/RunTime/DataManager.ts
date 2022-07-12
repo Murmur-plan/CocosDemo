@@ -2,8 +2,8 @@ import { ITile } from 'db://assets/Levels'
 import Singleton from 'db://assets/Base/Singleton'
 import { TileManager } from 'db://assets/Scripts/Tile/TileManager'
 import { PlayerManager } from 'db://assets/Scripts/Player/PlayerManager'
-import { WoodenSkeletonManager } from 'db://assets/Scripts/WoodenSkeleton/WoodenSkeletonManager'
 import { DoorManager } from 'db://assets/Scripts/Door/DoorManager'
+import { EnemyManager } from 'db://assets/Base/EnemyManager'
 
 export class DataManager extends Singleton {
   static get Instance() {
@@ -23,7 +23,7 @@ export class DataManager extends Singleton {
   //玩家
   palyer: PlayerManager
   //怪物
-  enemies: WoodenSkeletonManager[]
+  enemies: EnemyManager[]
   //门
   door: DoorManager
 
