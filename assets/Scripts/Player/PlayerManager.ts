@@ -63,9 +63,11 @@ export class PlayerManager extends EntityManager {
     }
     //是否可以攻击敌人
     if (this.willAttack(inputDirection)) {
+      EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
       return
     }
     if (this.willBlock(inputDirection)) {
+      EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
       return
     }
     this.move(inputDirection)

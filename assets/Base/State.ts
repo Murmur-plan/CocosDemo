@@ -22,9 +22,9 @@ export default class State {
   async init() {
     const pormise = ResourceManager.Instance.loadDir(this.path)
     this.fms.waitingList.push(pormise)
-    const spriteFrames = await pormise
+    let spriteFrames = await pormise
     this.animationClip = new AnimationClip()
-
+    spriteFrames = spriteFrames.filter(a => a.name.indexOf('(') > -1)
     const track = new animation.ObjectTrack() // 创建一个向量轨道
     track.path = new animation.TrackPath().toComponent(Sprite).toProperty('spriteFrame') // 指定轨道路径，即指定目标对象为 "Foo" 子节点的 "position" 属性
     const frames: Array<[number, SpriteFrame]> = sortSpriteFrame(spriteFrames).map((item, index) => [

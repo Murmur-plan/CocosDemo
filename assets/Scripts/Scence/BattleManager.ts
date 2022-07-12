@@ -63,7 +63,7 @@ export class BattleManager extends Component {
       await this.generateIronSkeleton(7, 7)
       //初始化门
       await this.generateDoor(7, 8)
-      await this.generateBurst(2, 7)
+      await this.generateBurst(2, 6)
     }
   }
   //下一关
@@ -161,5 +161,6 @@ export class BattleManager extends Component {
       state: ENTITY_STATE_ENUM.IDLE,
       type: ENTITY_TYPE_ENUM.BURST,
     })
+    DataManager.Instance.bursts.push(manager)
   }
 }

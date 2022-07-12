@@ -4,6 +4,7 @@ import { TileManager } from 'db://assets/Scripts/Tile/TileManager'
 import { PlayerManager } from 'db://assets/Scripts/Player/PlayerManager'
 import { DoorManager } from 'db://assets/Scripts/Door/DoorManager'
 import { EnemyManager } from 'db://assets/Base/EnemyManager'
+import { BurstManager } from 'db://assets/Scripts/Burst/BurstManager'
 
 export class DataManager extends Singleton {
   static get Instance() {
@@ -26,6 +27,8 @@ export class DataManager extends Singleton {
   enemies: EnemyManager[]
   //门
   door: DoorManager
+  //
+  bursts: BurstManager[]
 
   reset() {
     //地图信息
@@ -38,5 +41,6 @@ export class DataManager extends Singleton {
     this.palyer = null
     this.enemies = []
     this.door = null
+    this.bursts = []
   }
 }
