@@ -40,9 +40,6 @@ export class BurstManager extends EntityManager {
     if (!tile) {
       tile = new TileManager()
       DataManager.Instance.tileInfo[this.x][this.y] = tile
-    } else {
-      const sprite = tile.getComponent(Sprite)
-      sprite.spriteFrame = null
     }
     tile.moveable = true
     tile.turnable = true
