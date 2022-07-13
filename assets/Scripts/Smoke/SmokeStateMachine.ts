@@ -1,14 +1,14 @@
-import { _decorator, Animation, AnimationClip } from 'cc'
-import { EVENT_ENUM, PARAMS_NAME_ENUM } from 'db://assets/Enums'
+import { _decorator, Animation } from 'cc'
+import { ENTITY_STATE_ENUM, EVENT_ENUM, PARAMS_NAME_ENUM } from 'db://assets/Enums'
 import { getInitParamsNumber, getInitParamsTrigger, StateMachine } from 'db://assets/Base/StateMachine'
-import State from 'db://assets/Base/State'
+import IdleSubStateMachine from 'db://assets/Scripts/Smoke/IdleSubStateMachine'
+import DeathSubStateMachine from 'db://assets/Scripts/Smoke/DeathSubStateMachine'
+import { EntityManager } from 'db://assets/Base/EntityManager'
 
 const { ccclass, property } = _decorator
 
-const BASE_URL = 'texture/burst'
-
-@ccclass('BurstStateMachine')
-export class BurstStateMachine extends StateMachine {
+@ccclass('SmokeStateMachine')
+export class SmokeStateMachine extends StateMachine {
   async init() {
     //添加动画组件
     this.animationComponent = this.addComponent(Animation)
@@ -24,16 +24,14 @@ export class BurstStateMachine extends StateMachine {
   //初始化参数列表
   private initParams() {
     this.params.set(PARAMS_NAME_ENUM.IDLE, getInitParamsTrigger())
-    this.params.set(PARAMS_NAME_ENUM.ATTACK, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.DEATH, getInitParamsTrigger())
     this.params.set(PARAMS_NAME_ENUM.DIRECTION, getInitParamsNumber())
   }
 
   //初始化状态机
   private initStateMachines() {
-    this.stateMachines.set(PARAMS_NAME_ENUM.IDLE, new State(this, `${BASE_URL}/idle`))
-    this.stateMachines.set(PARAMS_NAME_ENUM.ATTACK, new State(this, `${BASE_URL}/attack`))
-    this.stateMachines.set(PARAMS_NAME_ENUM.DEATH, new State(this, `${BASE_URL}/death`))
+    this.stateMachines.set(PARAMS_NAME_ENUM.IDLE, new IdleSubStateMachine(this))
+    this.stateMachines.set(PARAMS_NAME_ENUM.DEATH, new DeathSubStateMachine(this))
   }
 
   run() {
@@ -59,9 +57,9 @@ export class BurstStateMachine extends StateMachine {
     //监听动画播放完毕事件
     this.animationComponent.on(Animation.EventType.FINISHED, () => {
       const name = this.animationComponent.defaultClip.name
-      const deathList = ['death']
+      const deathList = ['idle']
       if (deathList.some(v => name.includes(v))) {
-        this.node.destroy()
+        this.node.getComponent(EntityManager).state = ENTITY_STATE_ENUM.DEATH
       }
     })
   }

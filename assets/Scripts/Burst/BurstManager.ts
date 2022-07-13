@@ -2,9 +2,9 @@ import { _decorator, UITransform, Sprite } from 'cc'
 import { IEntity } from 'db://assets/Levels'
 import { EntityManager } from 'db://assets/Base/EntityManager'
 import { BurstStateMachine } from 'db://assets/Scripts/Burst/BurstStateMachine'
-import { TILE_HEIGHT, TILE_WIDTH } from 'db://assets/Scripts/Tile/TileManager'
+import { TILE_HEIGHT, TILE_WIDTH, TileManager } from 'db://assets/Scripts/Tile/TileManager'
 import { EventManager } from 'db://assets/RunTime/EventManager'
-import { ENTITY_STATE_ENUM, EVENT_ENUM } from 'db://assets/Enums'
+import { CONTROLER_ENUM, ENTITY_STATE_ENUM, EVENT_ENUM } from 'db://assets/Enums'
 import { DataManager } from 'db://assets/RunTime/DataManager'
 
 const { ccclass, property } = _decorator
@@ -26,6 +26,7 @@ export class BurstManager extends EntityManager {
     tile.moveable = false
     tile.turnable = true
   }
+
   async init(params: IEntity) {
     this.fsm = this.addComponent(BurstStateMachine)
     await this.fsm.init()
@@ -35,9 +36,16 @@ export class BurstManager extends EntityManager {
     transform.setContentSize(TILE_WIDTH, TILE_HEIGHT)
     EventManager.Instance.on(EVENT_ENUM.PLAY_MOVE_END, this.onBurst, this)
     //设置当前瓦片地图为空
-    const tile = DataManager.Instance.tileInfo[this.x][this.y]
-    const sprite = tile.getComponent(Sprite)
-    sprite.spriteFrame = null
+    let tile = DataManager.Instance.tileInfo[this.x][this.y]
+    if (!tile) {
+      tile = new TileManager()
+      DataManager.Instance.tileInfo[this.x][this.y] = tile
+    } else {
+      const sprite = tile.getComponent(Sprite)
+      sprite.spriteFrame = null
+    }
+    tile.moveable = true
+    tile.turnable = true
   }
 
   update() {
@@ -46,16 +54,15 @@ export class BurstManager extends EntityManager {
   }
 
   private onBurst() {
-    console.log(1)
     if (this.state === ENTITY_STATE_ENUM.DEATH || !DataManager.Instance.palyer) {
       return
     }
     const { x: playerX, y: playerY } = DataManager.Instance.palyer
-    console.log(2)
     if (playerX === this.x && playerY === this.y && this.state === ENTITY_STATE_ENUM.IDLE) {
       this.state = ENTITY_STATE_ENUM.ATTACK
     } else if (this.state === ENTITY_STATE_ENUM.ATTACK) {
       this.state = ENTITY_STATE_ENUM.DEATH
+      EventManager.Instance.emit(EVENT_ENUM.SCREEN_SHAKE, CONTROLER_ENUM.BOTTOM)
       if (playerX === this.x && playerY === this.y) {
         EventManager.Instance.emit(EVENT_ENUM.ATTACK_PLAYER, ENTITY_STATE_ENUM.AIR_DEATH)
       }

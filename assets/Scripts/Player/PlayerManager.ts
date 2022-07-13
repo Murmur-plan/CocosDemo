@@ -4,7 +4,6 @@ import { EventManager } from 'db://assets/RunTime/EventManager'
 import { PlayerStateMachine } from 'db://assets/Scripts/Player/PlayerStateMachine'
 import { EntityManager } from 'db://assets/Base/EntityManager'
 import { DataManager } from 'db://assets/RunTime/DataManager'
-import { TileManager } from 'db://assets/Scripts/Tile/TileManager'
 import { IEntity } from 'db://assets/Levels'
 
 const { ccclass, property } = _decorator
@@ -22,10 +21,15 @@ export class PlayerManager extends EntityManager {
     super.init(params)
     this.targetY = this.y
     this.targetX = this.x
-    this.direction = DIRECTION_ENUM.TOP
+    this.direction = params.direction
     this.state = ENTITY_STATE_ENUM.IDLE
     EventManager.Instance.on(EVENT_ENUM.PLAY_CONTROLER, this.inputHandle, this)
     EventManager.Instance.on(EVENT_ENUM.ATTACK_PLAYER, this.attacked, this)
+  }
+
+  onDestroy() {
+    EventManager.Instance.off(EVENT_ENUM.PLAY_CONTROLER, this.inputHandle, this)
+    EventManager.Instance.off(EVENT_ENUM.ATTACK_PLAYER, this.attacked, this)
   }
 
   update() {
@@ -68,6 +72,8 @@ export class PlayerManager extends EntityManager {
     }
     if (this.willBlock(inputDirection)) {
       EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
+      //拿到角色方向
+      EventManager.Instance.emit(EVENT_ENUM.SCREEN_SHAKE, inputDirection)
       return
     }
     this.move(inputDirection)
@@ -121,15 +127,19 @@ export class PlayerManager extends EntityManager {
     switch (inputDirection) {
       case CONTROLER_ENUM.TOP:
         this.targetY -= 1
+        this.showSmoke(CONTROLER_ENUM.TOP)
         break
       case CONTROLER_ENUM.BOTTOM:
         this.targetY += 1
+        this.showSmoke(CONTROLER_ENUM.BOTTOM)
         break
       case CONTROLER_ENUM.LEFT:
         this.targetX -= 1
+        this.showSmoke(CONTROLER_ENUM.LEFT)
         break
       case CONTROLER_ENUM.RIGHT:
         this.targetX += 1
+        this.showSmoke(CONTROLER_ENUM.RIGHT)
         break
       case CONTROLER_ENUM.TURN_LEFT:
         if (this.direction === DIRECTION_ENUM.TOP) {
@@ -166,97 +176,116 @@ export class PlayerManager extends EntityManager {
   private willBlock(inputDirection: CONTROLER_ENUM) {
     //拿到角色信息
     const { targetX: x, targetY: y, direction } = this
-    //拿到当前地图信息
-    const { tileInfo } = DataManager.Instance
-
     switch (direction) {
       //方向向上
       case DIRECTION_ENUM.TOP:
         //判断按键
         switch (inputDirection) {
           case CONTROLER_ENUM.BOTTOM:
-            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x, y, x, y + 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.LEFT:
-            return this.checkMoveBlock(tileInfo[x - 1][y - 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x - 1, y - 1, x - 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.RIGHT:
-            return this.checkMoveBlock(tileInfo[x + 1][y - 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x + 1, y - 1, x + 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TOP:
-            return this.checkMoveBlock(tileInfo[x][y - 2], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x, y - 2, x, y - 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TURN_LEFT:
-            return this.checkTurnBlock(tileInfo[x - 1][y - 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+            return this.checkTurnBlock(x - 1, y - 1, x - 1, y, ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
           case CONTROLER_ENUM.TURN_RIGHT:
-            return this.checkTurnBlock(tileInfo[x + 1][y - 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+            return this.checkTurnBlock(x + 1, y - 1, x + 1, y, ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
         }
         break
       case DIRECTION_ENUM.BOTTOM:
         //判断按键
         switch (inputDirection) {
           case CONTROLER_ENUM.BOTTOM:
-            return this.checkMoveBlock(tileInfo[x][y + 2], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x, y + 2, x, y + 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.LEFT:
-            return this.checkMoveBlock(tileInfo[x - 1][y + 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x - 1, y + 1, x - 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.RIGHT:
-            return this.checkMoveBlock(tileInfo[x + 1][y + 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x + 1, y + 1, x + 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TOP:
-            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x, y, x, y - 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TURN_LEFT:
-            return this.checkTurnBlock(tileInfo[x + 1][y + 1], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+            return this.checkTurnBlock(x + 1, y + 1, x + 1, y, ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
           case CONTROLER_ENUM.TURN_RIGHT:
-            return this.checkTurnBlock(tileInfo[x - 1][y + 1], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+            return this.checkTurnBlock(x - 1, y + 1, x - 1, y, ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
         }
         break
       case DIRECTION_ENUM.LEFT:
         //判断按键
         switch (inputDirection) {
           case CONTROLER_ENUM.BOTTOM:
-            return this.checkMoveBlock(tileInfo[x - 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x - 1, y + 1, x, y + 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.LEFT:
-            return this.checkMoveBlock(tileInfo[x - 2][y], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x - 2, y, x - 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.RIGHT:
-            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x, y, x + 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TOP:
-            return this.checkMoveBlock(tileInfo[x - 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x - 1, y - 1, x, y - 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TURN_LEFT:
-            return this.checkTurnBlock(tileInfo[x - 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+            return this.checkTurnBlock(x - 1, y + 1, x, y + 1, ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
           case CONTROLER_ENUM.TURN_RIGHT:
-            return this.checkTurnBlock(tileInfo[x - 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+            return this.checkTurnBlock(x - 1, y - 1, x, y - 1, ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
         }
         break
       case DIRECTION_ENUM.RIGHT:
         //判断按键
         switch (inputDirection) {
           case CONTROLER_ENUM.BOTTOM:
-            return this.checkMoveBlock(tileInfo[x + 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x + 1, y + 1, x, y + 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
+          // return this.checkMoveBlock(tileInfo[x + 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.LEFT:
-            return this.checkMoveBlock(tileInfo[x][y], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x, y, x - 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
+          // return this.checkMoveBlock(tileInfo[x][y], tileInfo[x - 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.RIGHT:
-            return this.checkMoveBlock(tileInfo[x + 2][y], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x + 2, y, x + 1, y, ENTITY_STATE_ENUM.BLOCK_FRONT)
+          // return this.checkMoveBlock(tileInfo[x + 2][y], tileInfo[x + 1][y], ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TOP:
-            return this.checkMoveBlock(tileInfo[x + 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
+            return this.checkMoveBlock(x + 1, y - 1, x, y - 1, ENTITY_STATE_ENUM.BLOCK_FRONT)
+          // return this.checkMoveBlock(tileInfo[x + 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_FRONT)
           case CONTROLER_ENUM.TURN_LEFT:
-            return this.checkTurnBlock(tileInfo[x + 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+            return this.checkTurnBlock(x + 1, y - 1, x, y - 1, ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
+          // return this.checkTurnBlock(tileInfo[x + 1][y - 1], tileInfo[x][y - 1], ENTITY_STATE_ENUM.BLOCK_TURN_LEFT)
           case CONTROLER_ENUM.TURN_RIGHT:
-            return this.checkTurnBlock(tileInfo[x + 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+            return this.checkTurnBlock(x + 1, y + 1, x, y + 1, ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
+          // return this.checkTurnBlock(tileInfo[x + 1][y + 1], tileInfo[x][y + 1], ENTITY_STATE_ENUM.BLOCK_TURN_RIGHT)
         }
         break
     }
     return false
   }
 
-  checkMoveBlock(armsTarget: TileManager, playerTarget: TileManager, state: ENTITY_STATE_ENUM): boolean {
-    if (!armsTarget || !armsTarget.turnable || !playerTarget || !playerTarget.moveable) {
+  checkMoveBlock(armsX, armsY, playerX, playerY, state: ENTITY_STATE_ENUM): boolean {
+    const { armsTarget, playerTarget } = this.checkTileInfo(armsX, armsY, playerX, playerY)
+    if ((armsTarget && !armsTarget.turnable) || !playerTarget || !playerTarget.moveable) {
       this.state = state
       return true
     }
     return false
   }
 
-  checkTurnBlock(armsTarget: TileManager, armsPassTarget: TileManager, state: ENTITY_STATE_ENUM): boolean {
-    if (!armsTarget || !armsTarget.turnable || !armsPassTarget || !armsPassTarget.turnable) {
+  checkTurnBlock(armsX, armsY, playerX, playerY, state: ENTITY_STATE_ENUM): boolean {
+    const { armsTarget, playerTarget: armsPassTarget } = this.checkTileInfo(armsX, armsY, playerX, playerY)
+    if ((armsTarget && !armsTarget.turnable) || (armsPassTarget && !armsPassTarget.turnable)) {
       this.state = state
       return true
     }
     return false
+  }
+
+  checkTileInfo(armsX, armsY, playerX, playerY) {
+    //拿到当前地图信息
+    const { tileInfo } = DataManager.Instance
+    let armsTarget = null
+    let playerTarget = null
+    if (tileInfo?.length > armsX && tileInfo[armsX]?.length > armsY) {
+      armsTarget = tileInfo[armsX][armsY]
+    }
+    if (tileInfo?.length > playerX && tileInfo[playerX]?.length > playerY) {
+      playerTarget = tileInfo[playerX][playerY]
+    }
+    return { armsTarget, playerTarget }
   }
 
   //主角死亡
@@ -264,5 +293,13 @@ export class PlayerManager extends EntityManager {
     if (this.state != type) {
       this.state = type
     }
+  }
+
+  private showSmoke(type: CONTROLER_ENUM) {
+    EventManager.Instance.emit(EVENT_ENUM.SHOW_SMOKE, this.x, this.y, type)
+  }
+
+  onAttackShake(type: CONTROLER_ENUM) {
+    EventManager.Instance.emit(EVENT_ENUM.SCREEN_SHAKE, type)
   }
 }

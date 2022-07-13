@@ -5,6 +5,8 @@ import { PlayerManager } from 'db://assets/Scripts/Player/PlayerManager'
 import { DoorManager } from 'db://assets/Scripts/Door/DoorManager'
 import { EnemyManager } from 'db://assets/Base/EnemyManager'
 import { BurstManager } from 'db://assets/Scripts/Burst/BurstManager'
+import { SpikesManager } from 'db://assets/Scripts/Spikes/SpikesManager'
+import { SmokeManager } from 'db://assets/Scripts/Smoke/SmokeManager'
 
 export class DataManager extends Singleton {
   static get Instance() {
@@ -29,6 +31,8 @@ export class DataManager extends Singleton {
   door: DoorManager
   //
   bursts: BurstManager[]
+  spikes: SpikesManager[]
+  smokes: SmokeManager[]
 
   reset() {
     //地图信息
@@ -42,5 +46,7 @@ export class DataManager extends Singleton {
     this.enemies = []
     this.door = null
     this.bursts = []
+    this.spikes = []
+    this.smokes = []
   }
 }
