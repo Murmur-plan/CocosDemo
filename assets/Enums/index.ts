@@ -30,6 +30,14 @@ export enum EVENT_ENUM {
   SHOW_SMOKE = 'SHOW_SMOKE',
   //开始震动
   SCREEN_SHAKE = 'SCREEN_SHAKE',
+  //记录
+  RECORD_STEP = 'RECORD_STEP',
+  //撤回
+  REVOKE_STEP = 'REVOKE_STEP',
+  //重置关卡
+  RESTART_LEVEL = 'RESTART_LEVEL',
+  //退出关卡
+  QUIT_BATTLE = 'QUIT_BATTLE',
 }
 
 export enum CONTROLER_ENUM {
@@ -124,4 +132,10 @@ export enum SPIKES_COUNT_MAP_NUMBER_ENUM {
   THREE = 3,
   FOUR = 4,
   FIVE = 5,
+}
+
+export enum SCENE_ENUM {
+  Loading = 'Loading',
+  Start = 'Start',
+  Battle = 'Battle',
 }

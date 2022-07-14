@@ -83,7 +83,7 @@ export class SpikesManager extends Component {
       this.curCount = this.curCount + 1
     }
     //拿到玩家
-    const { x: playerX, y: playerY } = DataManager.Instance.palyer
+    const { x: playerX, y: playerY } = DataManager.Instance.player
     if (this.x === playerX && this.y === playerY && (this.curCount === 0 || this.curCount === this.totalCount)) {
       EventManager.Instance.emit(EVENT_ENUM.ATTACK_PLAYER, ENTITY_STATE_ENUM.DEATH)
     }

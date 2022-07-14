@@ -85,6 +85,7 @@ export class DrawManager extends Component {
     })
   }
 
+  //一直黑的
   mask() {
     this.setAlpha(1)
     return new Promise(resolve => {

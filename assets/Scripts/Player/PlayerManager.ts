@@ -68,6 +68,7 @@ export class PlayerManager extends EntityManager {
     //是否可以攻击敌人
     if (this.willAttack(inputDirection)) {
       EventManager.Instance.emit(EVENT_ENUM.PLAY_MOVE_END)
+      EventManager.Instance.emit(EVENT_ENUM.RECORD_STEP)
       return
     }
     if (this.willBlock(inputDirection)) {
@@ -123,6 +124,7 @@ export class PlayerManager extends EntityManager {
   }
 
   move(inputDirection: CONTROLER_ENUM) {
+    EventManager.Instance.emit(EVENT_ENUM.RECORD_STEP)
     this.isMove = true
     switch (inputDirection) {
       case CONTROLER_ENUM.TOP:

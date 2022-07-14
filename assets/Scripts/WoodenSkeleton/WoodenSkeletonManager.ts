@@ -22,10 +22,10 @@ export class WoodenSkeletonManager extends EnemyManager {
   }
 
   onAttack() {
-    if (!DataManager.Instance.palyer || this.state === ENTITY_STATE_ENUM.DEATH) {
+    if (!DataManager.Instance.player || this.state === ENTITY_STATE_ENUM.DEATH) {
       return
     }
-    const { x: playerX, y: playerY, state: playState } = DataManager.Instance.palyer
+    const { x: playerX, y: playerY, state: playState } = DataManager.Instance.player
 
     if (
       (this.x === playerX && Math.abs(this.y - playerY) <= 1) ||

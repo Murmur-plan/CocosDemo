@@ -42,10 +42,10 @@ export class EnemyManager extends EntityManager {
   }
 
   private onChangeDirection(isInit: boolean = false) {
-    if (!DataManager.Instance.palyer || this.state === ENTITY_STATE_ENUM.DEATH) {
+    if (!DataManager.Instance.player || this.state === ENTITY_STATE_ENUM.DEATH) {
       return
     }
-    const { x: playerX, y: playerY } = DataManager.Instance.palyer
+    const { x: playerX, y: playerY } = DataManager.Instance.player
     //x轴距离
     const disX = Math.abs(this.x - playerX)
     //y轴距离

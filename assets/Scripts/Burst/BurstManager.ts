@@ -51,10 +51,10 @@ export class BurstManager extends EntityManager {
   }
 
   private onBurst() {
-    if (this.state === ENTITY_STATE_ENUM.DEATH || !DataManager.Instance.palyer) {
+    if (this.state === ENTITY_STATE_ENUM.DEATH || !DataManager.Instance.player) {
       return
     }
-    const { x: playerX, y: playerY } = DataManager.Instance.palyer
+    const { x: playerX, y: playerY } = DataManager.Instance.player
     if (playerX === this.x && playerY === this.y && this.state === ENTITY_STATE_ENUM.IDLE) {
       this.state = ENTITY_STATE_ENUM.ATTACK
     } else if (this.state === ENTITY_STATE_ENUM.ATTACK) {
